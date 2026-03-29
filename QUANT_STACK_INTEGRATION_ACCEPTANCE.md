@@ -12,7 +12,7 @@ Vul na elke acceptance run de secties **Resultaten** bij; houd repo-SHAs actueel
 |------|--------|--------|-----------|
 | quantbuildE1 | `v2-development` | `3cf42b8` | Integrate QuantLog emitter into live runner and add post-run pipeline |
 | quantBridge-v.1 | `main` | `ccdea09` | Make observability sink QuantLog-compatible with canonical envelope |
-| quantLog v.1 | `main` | `149fabb` | Add QUANT_STACK_INTEGRATION_ACCEPTANCE.md (first truth-loop dossier template) |
+| quantLog v.1 | `main` | *`git rev-parse HEAD` na pull* | Acceptance dossier (`QUANT_STACK_INTEGRATION_ACCEPTANCE.md`) + QuantLog CLI |
 
 ---
 
