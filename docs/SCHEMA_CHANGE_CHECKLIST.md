@@ -11,7 +11,7 @@ Gebruik deze checklist bij elke schemawijziging.
 - [ ] Sample day validate/summarize groen
 - [ ] `score-run` boven threshold op clean dataset
 - [ ] Anomaly quality gate faalt zoals verwacht
-- [ ] Documentatie bijgewerkt (`EVENT_SCHEMA.md`, README, runbook)
+- [ ] Documentatie bijgewerkt (`docs/EVENT_SCHEMA.md`, root `README.md`, `docs/REPLAY_RUNBOOK.md`)
 
 Geen merge zonder complete checklist.
 

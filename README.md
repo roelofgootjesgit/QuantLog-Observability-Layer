@@ -26,7 +26,7 @@ This repo is intentionally scoped as an event spine, not a full BI platform.
   - `trade_action.decision`: `ENTER|EXIT|REVERSE|NO_ACTION`
 - **Replay ordering**: `timestamp_utc` -> `source_seq` -> `ingested_at_utc`
 
-See `EVENT_SCHEMA.md` for full schema and examples.
+See [docs/EVENT_SCHEMA.md](docs/EVENT_SCHEMA.md) for full schema and examples. **Index:** [docs/README.md](docs/README.md).
 
 ## Repository layout
 
@@ -43,7 +43,7 @@ quantlog-v1/
 ├── tests/            unit tests
 ├── data/events/      sample/generated event files
 ├── configs/          schema registry
-└── docs (*.md)       architecture/runbook/mentor updates
+└── docs/             all Markdown documentation (index: docs/README.md)
 ```
 
 ## Quickstart (Windows PowerShell)
@@ -146,13 +146,20 @@ Local CI gates:
 - Runs on push and pull request
 - Executes the same smoke gates as local CI script
 
-## Additional docs
+## Documentation
 
-- `QUANTLOG_V1_ARCHITECTURE.md` - architecture and MVP boundaries
-- `EVENT_SCHEMA.md` - canonical schema and payload definitions
-- `EVENT_VERSIONING_POLICY.md` - formal schema/version compatibility policy
-- `QUANTLOG_GUARDRAILS.md` - scope boundaries and non-negotiables
-- `SCHEMA_CHANGE_CHECKLIST.md` - required checklist for schema changes
-- `REPLAY_RUNBOOK.md` - incident/replay/ops procedures
-- `MENTOR_UPDATE.md` - engineering status and next-phase direction
-- `ROADMAP_EXECUTION_STATUS.md` - full roadmap status and completion log
+All Markdown files live under **`docs/`**. Start at **[docs/README.md](docs/README.md)** for the full index.
+
+Highlights:
+
+- [docs/QUANTLOG_V1_ARCHITECTURE.md](docs/QUANTLOG_V1_ARCHITECTURE.md) — architecture and MVP boundaries
+- [docs/EVENT_SCHEMA.md](docs/EVENT_SCHEMA.md) — canonical schema and payload definitions
+- [docs/EVENT_VERSIONING_POLICY.md](docs/EVENT_VERSIONING_POLICY.md) — schema/version compatibility policy
+- [docs/QUANTLOG_GUARDRAILS.md](docs/QUANTLOG_GUARDRAILS.md) — scope boundaries and non-negotiables
+- [docs/SCHEMA_CHANGE_CHECKLIST.md](docs/SCHEMA_CHANGE_CHECKLIST.md) — checklist for schema changes
+- [docs/REPLAY_RUNBOOK.md](docs/REPLAY_RUNBOOK.md) — incident/replay/ops procedures
+- [docs/MENTOR_UPDATE.md](docs/MENTOR_UPDATE.md) — engineering status and next-phase direction
+- [docs/ROADMAP_EXECUTION_STATUS.md](docs/ROADMAP_EXECUTION_STATUS.md) — roadmap status and completion log
+- [docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md](docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md) — integration plan (dry-run → full stack)
+- [docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md](docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md) — stack acceptance dossier (001 / 002)
+- [docs/QUANTLOG_UITLEG.md](docs/QUANTLOG_UITLEG.md) / [docs/QUANTLOG_SOFTWARE.md](docs/QUANTLOG_SOFTWARE.md) — NL / software overview
