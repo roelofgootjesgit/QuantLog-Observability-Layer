@@ -16,5 +16,6 @@ Alle Markdown-documentatie van deze repository staat in **`docs/`**. Het project
 | [QUANTLOG_SOFTWARE.md](QUANTLOG_SOFTWARE.md) | Software-overzicht |
 | [QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md](QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md) | Integratieplan Build ↔ Log |
 | [QUANT_STACK_INTEGRATION_ACCEPTANCE.md](QUANT_STACK_INTEGRATION_ACCEPTANCE.md) | Stack acceptance (001 / 002) |
+| [VPS_SYNC.md](VPS_SYNC.md) | VPS: QuantLog als 3e module (zelfde ritme als QuantBuild `VPS_MULTI_MODULE` + Operator Cheatsheet) |
 | [MENTOR_UPDATE.md](MENTOR_UPDATE.md) | Status / richting |
 | [ROADMAP_EXECUTION_STATUS.md](ROADMAP_EXECUTION_STATUS.md) | Roadmap en voortgang |

@@ -162,4 +162,5 @@ Highlights:
 - [docs/ROADMAP_EXECUTION_STATUS.md](docs/ROADMAP_EXECUTION_STATUS.md) — roadmap status and completion log
 - [docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md](docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md) — integration plan (dry-run → full stack)
 - [docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md](docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md) — stack acceptance dossier (001 / 002)
+- [docs/VPS_SYNC.md](docs/VPS_SYNC.md) — VPS: zelfde venv/pull-workflow als QuantBuild (`VPS_MULTI_MODULE` + Operator Cheatsheet), QuantLog als derde repo
 - [docs/QUANTLOG_UITLEG.md](docs/QUANTLOG_UITLEG.md) / [docs/QUANTLOG_SOFTWARE.md](docs/QUANTLOG_SOFTWARE.md) — NL / software overview

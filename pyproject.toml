@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "quantlog-v1"
 version = "0.1.0"
 description = "QuantLog v1 event spine (validate, replay, summarize)"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = []
 
 [tool.setuptools]
