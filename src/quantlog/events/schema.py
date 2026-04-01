@@ -48,3 +48,23 @@ EVENT_PAYLOAD_REQUIRED: Final[dict[str, set[str]]] = {
 TRADE_ACTION_DECISIONS: Final[set[str]] = {"ENTER", "EXIT", "REVERSE", "NO_ACTION"}
 RISK_GUARD_DECISIONS: Final[set[str]] = {"ALLOW", "BLOCK", "REDUCE", "DELAY"}
 
+# Observability: every non-trade must state why. `trade_action` with decision=NO_ACTION
+# must use exactly one of these snake_case reason values (validated in validator.py).
+NO_ACTION_REASONS_CORE: Final[set[str]] = {
+    "no_setup",
+    "regime_blocked",
+    "session_blocked",
+    "risk_blocked",
+    "spread_too_high",
+    "news_filter_active",
+}
+NO_ACTION_REASONS_EXTENDED: Final[set[str]] = {
+    "position_limit_reached",
+    "cooldown_active",
+    "broker_unavailable",
+    "market_data_unavailable",
+    "execution_disabled",
+    "confidence_too_low",
+}
+NO_ACTION_REASONS_ALLOWED: Final[set[str]] = NO_ACTION_REASONS_CORE | NO_ACTION_REASONS_EXTENDED
+

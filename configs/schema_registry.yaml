@@ -26,6 +26,20 @@ event_types:
       - EXIT
       - REVERSE
       - NO_ACTION
+    # When decision is NO_ACTION, payload.reason must be one of these (snake_case).
+    no_action_reasons:
+      - no_setup
+      - regime_blocked
+      - session_blocked
+      - risk_blocked
+      - spread_too_high
+      - news_filter_active
+      - position_limit_reached
+      - cooldown_active
+      - broker_unavailable
+      - market_data_unavailable
+      - execution_disabled
+      - confidence_too_low
   adaptive_mode_transition:
     required_payload:
       - old_mode

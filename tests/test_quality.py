@@ -39,7 +39,7 @@ class TestQuality(unittest.TestCase):
                 event_type="trade_action",
                 trace_id="trace_quality_1",
                 timestamp_utc="2026-03-29T18:00:02Z",
-                payload={"decision": "NO_ACTION", "reason": "blocked"},
+                payload={"decision": "NO_ACTION", "reason": "risk_blocked"},
             )
 
             report = score_run(root, max_gap_seconds=300, pass_threshold=95)

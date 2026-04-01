@@ -97,6 +97,32 @@ class TestValidator(unittest.TestCase):
             error_messages = [issue.message for issue in report.issues if issue.level == "error"]
             self.assertIn("invalid_trade_action_decision: TRADE", error_messages)
 
+    def test_trade_action_no_action_reason_must_be_canonical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000014",
+                "event_type": "trade_action",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:03Z",
+                "ingested_at_utc": "2026-03-29T18:00:03Z",
+                "source_system": "quantbuild",
+                "source_component": "decision_engine",
+                "environment": "paper",
+                "run_id": "run_test_noact",
+                "session_id": "session_test_noact",
+                "source_seq": 1,
+                "trace_id": "trace_test_noact",
+                "severity": "info",
+                "payload": {"decision": "NO_ACTION", "reason": "blocked_by_guard"},
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+            report = validate_path(path)
+            error_messages = [issue.message for issue in report.issues if issue.level == "error"]
+            self.assertIn("invalid_no_action_reason: 'blocked_by_guard'", error_messages)
+
 
 if __name__ == "__main__":
     unittest.main()

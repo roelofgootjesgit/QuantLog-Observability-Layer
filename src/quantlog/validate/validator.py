@@ -14,6 +14,7 @@ from quantlog.events.schema import (
     ALLOWED_SEVERITIES,
     ALLOWED_SOURCE_SYSTEMS,
     EVENT_PAYLOAD_REQUIRED,
+    NO_ACTION_REASONS_ALLOWED,
     REQUIRED_ENVELOPE_FIELDS,
     RISK_GUARD_DECISIONS,
     TRADE_ACTION_DECISIONS,
@@ -225,6 +226,17 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                     message=f"invalid_trade_action_decision: {decision}",
                 )
             )
+        elif decision == "NO_ACTION" and "reason" in payload:
+            reason = payload["reason"]
+            if not isinstance(reason, str) or reason not in NO_ACTION_REASONS_ALLOWED:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=raw_line.path,
+                        line_number=raw_line.line_number,
+                        message=f"invalid_no_action_reason: {reason!r}",
+                    )
+                )
 
     if event_type == "risk_guard_decision" and isinstance(payload, dict):
         decision = str(payload.get("decision", "")).upper()

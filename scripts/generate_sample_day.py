@@ -134,7 +134,7 @@ def _emit_blocked(
         strategy_id=strategy_id,
         symbol=symbol,
         timestamp_utc=_fmt(base_dt + timedelta(seconds=2)),
-        payload={"decision": "NO_ACTION", "reason": "blocked_by_guard", "side": "SELL"},
+        payload={"decision": "NO_ACTION", "reason": "spread_too_high", "side": "SELL"},
     )
 
 
@@ -264,7 +264,7 @@ def _emit_governance_pause(
         strategy_id=strategy_id,
         symbol=symbol,
         timestamp_utc=_fmt(base_dt + timedelta(seconds=2)),
-        payload={"decision": "NO_ACTION", "reason": "governance_paused", "side": "BUY"},
+        payload={"decision": "NO_ACTION", "reason": "execution_disabled", "side": "BUY"},
     )
 
 
@@ -302,7 +302,7 @@ def _emit_failsafe_pause(
         strategy_id=strategy_id,
         symbol=symbol,
         timestamp_utc=_fmt(base_dt + timedelta(seconds=2)),
-        payload={"decision": "NO_ACTION", "reason": "failsafe_pause_active", "side": "SELL"},
+        payload={"decision": "NO_ACTION", "reason": "execution_disabled", "side": "SELL"},
     )
 
 
@@ -334,7 +334,7 @@ def _emit_adaptive_mode(
         strategy_id=strategy_id,
         symbol=symbol,
         timestamp_utc=_fmt(base_dt + timedelta(seconds=1)),
-        payload={"decision": "NO_ACTION", "reason": "mode_transition_hold"},
+        payload={"decision": "NO_ACTION", "reason": "cooldown_active"},
     )
 
 
@@ -373,7 +373,7 @@ def _emit_session_restart_probe(
         strategy_id=strategy_id,
         symbol=symbol,
         timestamp_utc=_fmt(base_dt + timedelta(seconds=1)),
-        payload={"decision": "NO_ACTION", "reason": "session_restart_probe"},
+        payload={"decision": "NO_ACTION", "reason": "session_blocked"},
     )
 
 

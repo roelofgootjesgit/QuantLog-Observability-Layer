@@ -164,7 +164,7 @@ def _emit_block_path(
         symbol=symbol,
         payload={
             "decision": "NO_ACTION",
-            "reason": "blocked_by_guard",
+            "reason": "spread_too_high",
             "side": "SELL",
         },
         timestamp_utc="2026-03-29T18:01:02Z",
