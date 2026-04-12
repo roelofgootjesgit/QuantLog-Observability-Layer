@@ -31,6 +31,8 @@ class DailySummary:
     # P3: guard outcomes (BLOCK counts by guard_name for funnel analysis)
     risk_guard_by_decision: dict[str, int]
     risk_guard_blocks_by_guard: dict[str, int]
+    # Pipeline: filter stage histogram (canonical reasons, same set as NO_ACTION)
+    signal_filtered_by_reason: dict[str, int]
     by_severity: dict[str, int]
     by_source_system: dict[str, int]
     by_source_component: dict[str, int]
@@ -70,6 +72,7 @@ def summarize_path(path: Path) -> DailySummary:
     no_action_by_reason: Counter[str] = Counter()
     risk_guard_by_decision: Counter[str] = Counter()
     risk_guard_blocks_by_guard: Counter[str] = Counter()
+    signal_filtered_by_reason: Counter[str] = Counter()
     by_severity: Counter[str] = Counter()
     by_source_system: Counter[str] = Counter()
     by_source_component: Counter[str] = Counter()
@@ -168,6 +171,12 @@ def summarize_path(path: Path) -> DailySummary:
                 failsafe_pauses += 1
             elif event_type == "audit_gap_detected":
                 audit_gaps_detected += 1
+            elif event_type == "signal_filtered":
+                sfr = payload.get("filter_reason")
+                if isinstance(sfr, str) and sfr.strip():
+                    signal_filtered_by_reason[sfr.strip()] += 1
+                else:
+                    signal_filtered_by_reason["<missing_or_empty_filter_reason>"] += 1
 
     avg_slippage = (sum(slippages) / len(slippages)) if slippages else None
     median_slippage = _median(slippages)
@@ -189,6 +198,7 @@ def summarize_path(path: Path) -> DailySummary:
         no_action_by_reason=dict(no_action_by_reason),
         risk_guard_by_decision=dict(risk_guard_by_decision),
         risk_guard_blocks_by_guard=dict(risk_guard_blocks_by_guard),
+        signal_filtered_by_reason=dict(signal_filtered_by_reason),
         by_severity=dict(by_severity),
         by_source_system=dict(by_source_system),
         by_source_component=dict(by_source_component),

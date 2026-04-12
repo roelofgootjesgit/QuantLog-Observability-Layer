@@ -19,6 +19,7 @@ from quantlog.events.schema import (
     REQUIRED_ENVELOPE_FIELDS,
     RISK_GUARD_DECISIONS,
     TRADE_ACTION_DECISIONS,
+    TRADE_EXECUTED_DIRECTIONS,
 )
 
 
@@ -268,6 +269,30 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                 )
             )
 
+    if event_type == "signal_filtered" and isinstance(payload, dict):
+        fr = payload.get("filter_reason")
+        if not isinstance(fr, str) or fr not in NO_ACTION_REASONS_ALLOWED:
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    path=raw_line.path,
+                    line_number=raw_line.line_number,
+                    message=f"invalid_signal_filtered_reason: {fr!r}",
+                )
+            )
+
+    if event_type == "trade_executed" and isinstance(payload, dict):
+        direction = str(payload.get("direction", "")).upper()
+        if direction not in TRADE_EXECUTED_DIRECTIONS:
+            issues.append(
+                ValidationIssue(
+                    level="error",
+                    path=raw_line.path,
+                    line_number=raw_line.line_number,
+                    message=f"invalid_trade_executed_direction: {direction}",
+                )
+            )
+
     if event_type in {"order_submitted", "order_filled", "order_rejected"} and not event.get(
         "order_ref"
     ):
@@ -277,6 +302,16 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                 path=raw_line.path,
                 line_number=raw_line.line_number,
                 message="execution_event_missing_order_ref",
+            )
+        )
+
+    if event_type == "trade_executed" and not event.get("order_ref"):
+        issues.append(
+            ValidationIssue(
+                level="warn",
+                path=raw_line.path,
+                line_number=raw_line.line_number,
+                message="trade_executed_missing_order_ref",
             )
         )
 

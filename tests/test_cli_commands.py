@@ -37,6 +37,10 @@ class TestCliCommands(unittest.TestCase):
         self.assertIn("trade_action", data["event_types"])
         self.assertIn("decision", data["payload_contracts"]["trade_action"])
         self.assertIn("reason", data["payload_contracts"]["trade_action"])
+        self.assertIn("signal_detected", data["event_types"])
+        self.assertIn("signal_filtered", data["event_types"])
+        self.assertIn("trade_executed", data["event_types"])
+        self.assertIn("signal_id", data["payload_contracts"]["signal_detected"])
 
     def test_list_envelope_schema_has_core_enums(self) -> None:
         buf = io.StringIO()
@@ -48,6 +52,7 @@ class TestCliCommands(unittest.TestCase):
         self.assertIn("live", data["allowed_environments"])
         self.assertIn("quantbuild", data["allowed_source_systems"])
         self.assertIn("NO_ACTION", data["trade_action_decisions"])
+        self.assertIn("LONG", data["trade_executed_directions"])
 
     def test_export_v1_schema_merges_envelope_events_and_reasons(self) -> None:
         buf = io.StringIO()
@@ -59,6 +64,7 @@ class TestCliCommands(unittest.TestCase):
         self.assertIn("trade_action", data["event_types"]["payload_contracts"])
         self.assertIn("no_setup", data["no_action_reasons"]["core"])
         self.assertIn("run_id", data["envelope"]["required_fields"])
+        self.assertIn("LONG", data["envelope"]["trade_executed_directions"])
 
 
 if __name__ == "__main__":

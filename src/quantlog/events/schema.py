@@ -27,8 +27,22 @@ ALLOWED_ENVIRONMENTS: Final[set[str]] = {"paper", "dry_run", "live", "shadow"}
 
 EVENT_PAYLOAD_REQUIRED: Final[dict[str, set[str]]] = {
     "signal_evaluated": {"signal_type", "signal_direction", "confidence"},
+    # QuantBuild pipeline: raw ICT/SQE hit before filters (see QuantBuild LiveRunner).
+    "signal_detected": {
+        "signal_id",
+        "type",
+        "direction",
+        "strength",
+        "bar_timestamp",
+        "session",
+        "regime",
+    },
+    # Filter stage: canonical filter_reason matches trade_action NO_ACTION reason set.
+    "signal_filtered": {"filter_reason", "raw_reason"},
     "risk_guard_decision": {"guard_name", "decision", "reason"},
     "trade_action": {"decision", "reason"},
+    # Confirmed registration after ENTER (QuantBuild; envelope should carry order_ref when known).
+    "trade_executed": {"direction", "trade_id"},
     "adaptive_mode_transition": {"old_mode", "new_mode", "reason"},
     "broker_connect": {"broker", "status"},
     "order_submitted": {"order_ref", "side", "volume"},
@@ -47,6 +61,7 @@ EVENT_PAYLOAD_REQUIRED: Final[dict[str, set[str]]] = {
 
 TRADE_ACTION_DECISIONS: Final[set[str]] = {"ENTER", "EXIT", "REVERSE", "NO_ACTION"}
 RISK_GUARD_DECISIONS: Final[set[str]] = {"ALLOW", "BLOCK", "REDUCE", "DELAY"}
+TRADE_EXECUTED_DIRECTIONS: Final[set[str]] = {"LONG", "SHORT"}
 
 # Observability: every non-trade must state why. `trade_action` with decision=NO_ACTION
 # must use exactly one of these snake_case reason values (validated in validator.py).

@@ -139,6 +139,8 @@ python -m quantlog.cli export-v1-schema
 
 `non_contract_event_types` counts `event_type` strings that are **not** in the v1 contract (`list-event-types`). The quality score applies a small penalty when any are present.
 
+QuantBuild pipeline (edge decomposition): contract types `signal_detected`, `signal_filtered`, `trade_executed` — see `docs/EVENT_SCHEMA.md`. `summarize-day` adds `signal_filtered_by_reason` (histogram op canonieke `filter_reason`).
+
 `summarize-day` and `score-run` include `count_unique_run_ids`, `count_unique_session_ids`, and `count_unique_trace_ids` (distinct non-empty envelope values) to spot merged folders or multi-run days.
 
 ## Build and test workflows

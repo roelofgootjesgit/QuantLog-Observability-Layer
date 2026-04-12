@@ -109,7 +109,7 @@ def _scan_event_integrity(path: Path) -> tuple[int, int, int, int]:
             if not isinstance(trace_id, str) or not trace_id.strip():
                 missing_trace_ids += 1
 
-            if event_type in {"order_submitted", "order_filled", "order_rejected"}:
+            if event_type in {"order_submitted", "order_filled", "order_rejected", "trade_executed"}:
                 order_ref = event.get("order_ref")
                 if not isinstance(order_ref, str) or not order_ref.strip():
                     missing_order_ref_execution += 1

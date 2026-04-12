@@ -17,6 +17,21 @@ event_types:
       - BLOCK
       - REDUCE
       - DELAY
+  signal_detected:
+    required_payload:
+      - signal_id
+      - type
+      - direction
+      - strength
+      - bar_timestamp
+      - session
+      - regime
+  signal_filtered:
+    required_payload:
+      - filter_reason
+      - raw_reason
+    # filter_reason uses the same canonical strings as trade_action NO_ACTION reason.
+    filter_reasons_same_as_no_action: true
   trade_action:
     required_payload:
       - decision
@@ -40,6 +55,13 @@ event_types:
       - market_data_unavailable
       - execution_disabled
       - confidence_too_low
+  trade_executed:
+    required_payload:
+      - direction
+      - trade_id
+    allowed_directions:
+      - LONG
+      - SHORT
   adaptive_mode_transition:
     required_payload:
       - old_mode

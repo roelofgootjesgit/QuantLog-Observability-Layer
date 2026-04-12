@@ -205,6 +205,35 @@ class TestSummarize(unittest.TestCase):
             self.assertEqual(s.risk_guard_by_decision.get("BLOCK"), 1)
             self.assertEqual(s.blocks_total, 1)
 
+    def test_signal_filtered_by_reason_histogram(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            f = path / "e.jsonl"
+            ev = {
+                "event_id": "00000000-0000-0000-0000-000000000036",
+                "event_type": "signal_filtered",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:00Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "paper",
+                "run_id": "run_sf",
+                "session_id": "session_sf",
+                "source_seq": 1,
+                "trace_id": "trace_sf",
+                "severity": "info",
+                "payload": {
+                    "filter_reason": "regime_blocked",
+                    "raw_reason": "regime_block",
+                    "signal_id": "sig_x",
+                },
+            }
+            f.write_text(json.dumps(ev) + "\n", encoding="utf-8")
+            s = summarize_path(path)
+            self.assertEqual(s.signal_filtered_by_reason.get("regime_blocked"), 1)
+            self.assertEqual(s.non_contract_event_types, {})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -38,6 +38,12 @@ def _summary_for_event(event: dict[str, Any]) -> str:
         return f"{payload.get('guard_name', 'guard')} -> {payload.get('decision', '?')}"
     if event_type == "trade_action":
         return f"{payload.get('decision', '?')} ({payload.get('reason', 'no_reason')})"
+    if event_type == "signal_detected":
+        return f"{payload.get('direction', '?')} {payload.get('type', '?')} @ {payload.get('bar_timestamp', '?')}"
+    if event_type == "signal_filtered":
+        return f"{payload.get('filter_reason', '?')} (raw={payload.get('raw_reason', '?')})"
+    if event_type == "trade_executed":
+        return f"{payload.get('direction', '?')} trade_id={payload.get('trade_id', '?')}"
     if event_type in {"order_submitted", "order_filled", "order_rejected"}:
         return f"order_ref={payload.get('order_ref', event.get('order_ref', 'n/a'))}"
     if event_type == "governance_state_changed":

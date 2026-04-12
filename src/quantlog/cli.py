@@ -22,6 +22,7 @@ from quantlog.events.schema import (
     REQUIRED_ENVELOPE_FIELDS,
     RISK_GUARD_DECISIONS,
     TRADE_ACTION_DECISIONS,
+    TRADE_EXECUTED_DIRECTIONS,
 )
 from quantlog.validate.validator import aggregate_validation_issue_codes, validate_path
 
@@ -97,6 +98,7 @@ def cmd_summarize_day(args: argparse.Namespace) -> int:
         "no_action_by_reason": summary.no_action_by_reason,
         "risk_guard_by_decision": summary.risk_guard_by_decision,
         "risk_guard_blocks_by_guard": summary.risk_guard_blocks_by_guard,
+        "signal_filtered_by_reason": summary.signal_filtered_by_reason,
         "by_severity": summary.by_severity,
         "by_source_system": summary.by_source_system,
         "by_source_component": summary.by_source_component,
@@ -210,6 +212,7 @@ def cmd_list_envelope_schema(_args: argparse.Namespace) -> int:
             "allowed_environments": sorted(ALLOWED_ENVIRONMENTS),
             "trade_action_decisions": sorted(TRADE_ACTION_DECISIONS),
             "risk_guard_decisions": sorted(RISK_GUARD_DECISIONS),
+            "trade_executed_directions": sorted(TRADE_EXECUTED_DIRECTIONS),
         }
     )
     return 0
@@ -228,6 +231,7 @@ def cmd_export_v1_schema(_args: argparse.Namespace) -> int:
                 "allowed_environments": sorted(ALLOWED_ENVIRONMENTS),
                 "trade_action_decisions": sorted(TRADE_ACTION_DECISIONS),
                 "risk_guard_decisions": sorted(RISK_GUARD_DECISIONS),
+                "trade_executed_directions": sorted(TRADE_EXECUTED_DIRECTIONS),
             },
             "event_types": {
                 "names": sorted(EVENT_PAYLOAD_REQUIRED.keys()),

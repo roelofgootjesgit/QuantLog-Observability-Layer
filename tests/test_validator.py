@@ -209,6 +209,93 @@ class TestValidator(unittest.TestCase):
             self.assertTrue(any(m.startswith("source_seq_not_monotonic:") for m in error_messages))
             self.assertEqual(report.events_valid, 1)
 
+    def test_signal_detected_valid_minimal_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000018",
+                "event_type": "signal_detected",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "paper",
+                "run_id": "run_sd",
+                "session_id": "session_sd",
+                "source_seq": 1,
+                "trace_id": "trace_sd",
+                "severity": "info",
+                "payload": {
+                    "signal_id": "sig_1",
+                    "type": "sqe_entry",
+                    "direction": "LONG",
+                    "strength": 1.0,
+                    "bar_timestamp": "2026-03-29T17:45:00Z",
+                    "session": "London",
+                    "regime": "trend",
+                },
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            self.assertEqual(report.events_valid, 1)
+            self.assertEqual(len([i for i in report.issues if i.level == "error"]), 0)
+
+    def test_signal_filtered_reason_must_be_canonical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000019",
+                "event_type": "signal_filtered",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "paper",
+                "run_id": "run_sf",
+                "session_id": "session_sf",
+                "source_seq": 1,
+                "trace_id": "trace_sf",
+                "severity": "info",
+                "payload": {
+                    "filter_reason": "not_a_canonical_reason",
+                    "raw_reason": "foo",
+                },
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            error_messages = [issue.message for issue in report.issues if issue.level == "error"]
+            self.assertIn("invalid_signal_filtered_reason: 'not_a_canonical_reason'", error_messages)
+
+    def test_trade_executed_direction_enum(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000020",
+                "event_type": "trade_executed",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "paper",
+                "run_id": "run_te",
+                "session_id": "session_te",
+                "source_seq": 1,
+                "trace_id": "trace_te",
+                "severity": "info",
+                "order_ref": "ord_1",
+                "payload": {"direction": "BUY", "trade_id": "t1"},
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            error_messages = [issue.message for issue in report.issues if issue.level == "error"]
+            self.assertIn("invalid_trade_executed_direction: BUY", error_messages)
+
 
 if __name__ == "__main__":
     unittest.main()

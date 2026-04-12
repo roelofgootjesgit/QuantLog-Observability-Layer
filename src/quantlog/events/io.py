@@ -39,6 +39,13 @@ def iter_jsonl_file(path: Path) -> Iterable[RawEventLine]:
 
 
 def discover_jsonl_files(path: Path) -> list[Path]:
+    path = path.expanduser()
+    if not path.exists():
+        raise FileNotFoundError(
+            f"QuantLog path does not exist: {path}. "
+            "Pass a real directory (e.g. data/quantlog_events/2026-04-12) or a .jsonl file — "
+            "not a placeholder like '...'."
+        )
     if path.is_file():
         return [path]
     return sorted(path.rglob("*.jsonl"))

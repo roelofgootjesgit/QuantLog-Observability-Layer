@@ -96,22 +96,25 @@ Zonder deze velden is betrouwbare replay niet mogelijk.
 ### QuantBuild
 
 1. `signal_evaluated`
-2. `risk_guard_decision`
-3. `trade_action`
-4. `adaptive_mode_transition`
+2. `signal_detected` — ruwe pipeline-hit (vóór filters), QuantBuild LiveRunner
+3. `signal_filtered` — filter faalde; `filter_reason` is canoniek (zelfde set als `trade_action` NO_ACTION)
+4. `risk_guard_decision`
+5. `trade_action`
+6. `trade_executed` — trade geregistreerd na ENTER (aanvulling op `trade_action` ENTER)
+7. `adaptive_mode_transition`
 
 ### QuantBridge
 
-5. `broker_connect`
-6. `order_submitted`
-7. `order_filled`
-8. `order_rejected`
-9. `governance_state_changed`
-10. `failsafe_pause`
+8. `broker_connect`
+9. `order_submitted`
+10. `order_filled`
+11. `order_rejected`
+12. `governance_state_changed`
+13. `failsafe_pause`
 
 ### QuantLog
 
-11. `audit_gap_detected`
+14. `audit_gap_detected`
 
 ---
 
@@ -130,7 +133,49 @@ Zonder deze velden is betrouwbare replay niet mogelijk.
 }
 ```
 
-### 6.2 `risk_guard_decision`
+### 6.2 `signal_detected` (QuantBuild pipeline)
+
+Verplichte payload-keys: `signal_id`, `type`, `direction`, `strength`, `bar_timestamp`, `session`, `regime`. Optioneel o.a. `modules` (object).
+
+```json
+{
+  "signal_id": "8f2c…",
+  "type": "sqe_entry",
+  "direction": "LONG",
+  "strength": 1.0,
+  "bar_timestamp": "2026-06-01T12:00:00Z",
+  "session": "London",
+  "regime": "trend"
+}
+```
+
+### 6.3 `signal_filtered`
+
+Verplicht: `filter_reason` (canoniek, zie NO_ACTION-set), `raw_reason` (interne code van de emitter).
+
+```json
+{
+  "filter_reason": "spread_too_high",
+  "raw_reason": "spread_block",
+  "signal_id": "8f2c…"
+}
+```
+
+### 6.4 `trade_executed`
+
+Verplicht: `direction` (`LONG`|`SHORT`), `trade_id`. Optioneel: `signal_id`, `session`, `regime`. Aanbevolen: envelope-veld `order_ref` gelijk aan `trade_id`.
+
+```json
+{
+  "signal_id": "8f2c…",
+  "direction": "LONG",
+  "trade_id": "DRY_20260601_120500_LONG",
+  "session": "London",
+  "regime": "trend"
+}
+```
+
+### 6.5 `risk_guard_decision`
 
 ```json
 {
@@ -144,7 +189,7 @@ Zonder deze velden is betrouwbare replay niet mogelijk.
 
 `decision` waarden: `ALLOW`, `BLOCK`, `REDUCE`, `DELAY`.
 
-### 6.3 `trade_action`
+### 6.6 `trade_action`
 
 ```json
 {
@@ -168,7 +213,7 @@ Semantiek:
 - `risk_guard_decision` bepaalt `ALLOW|BLOCK|REDUCE|DELAY`.
 - `trade_action` geeft alleen trading intent weer (`ENTER|EXIT|REVERSE|NO_ACTION`).
 
-### 6.4 `adaptive_mode_transition`
+### 6.7 `adaptive_mode_transition`
 
 ```json
 {
@@ -180,7 +225,7 @@ Semantiek:
 }
 ```
 
-### 6.5 `broker_connect`
+### 6.8 `broker_connect`
 
 ```json
 {
@@ -191,7 +236,7 @@ Semantiek:
 }
 ```
 
-### 6.6 `order_submitted`
+### 6.9 `order_submitted`
 
 ```json
 {
@@ -204,7 +249,7 @@ Semantiek:
 }
 ```
 
-### 6.7 `order_filled`
+### 6.10 `order_filled`
 
 ```json
 {
@@ -217,7 +262,7 @@ Semantiek:
 }
 ```
 
-### 6.8 `order_rejected`
+### 6.11 `order_rejected`
 
 ```json
 {
@@ -227,7 +272,7 @@ Semantiek:
 }
 ```
 
-### 6.9 `governance_state_changed`
+### 6.12 `governance_state_changed`
 
 ```json
 {
@@ -238,7 +283,7 @@ Semantiek:
 }
 ```
 
-### 6.10 `failsafe_pause`
+### 6.13 `failsafe_pause`
 
 ```json
 {
@@ -248,7 +293,7 @@ Semantiek:
 }
 ```
 
-### 6.11 `audit_gap_detected`
+### 6.14 `audit_gap_detected`
 
 ```json
 {
@@ -278,8 +323,11 @@ Semantiek:
 Gebruik consistente, leesbare namen:
 
 - `signal_evaluated`
+- `signal_detected`
+- `signal_filtered`
 - `risk_guard_decision`
 - `trade_action`
+- `trade_executed`
 - `order_filled`
 - `governance_state_changed`
 
@@ -291,14 +339,16 @@ Vermijd korte/ambigue namen zoals `filled` of `riskCheck`.
 
 Voor end-to-end replay van een trade zijn minimaal nodig:
 
-1. `signal_evaluated`
+1. `signal_evaluated` (of `signal_detected` in pipeline-runs)
 2. `risk_guard_decision`
 3. `trade_action`
-4. `order_submitted`
-5. `order_filled`
+4. `trade_executed` (QuantBuild na ENTER)
+5. `order_submitted`
+6. `order_filled`
 
 Optioneel/context:
 
+- `signal_filtered`
 - `governance_state_changed`
 - `failsafe_pause`
 
@@ -318,11 +368,14 @@ Een event is ongeldig als:
 - `payload` geen object is
 - `trade_action.decision` buiten toegestane set valt
 - `risk_guard_decision.decision` buiten toegestane set valt
+- `signal_filtered.filter_reason` is geen canonieke NO_ACTION-string
+- `trade_executed.direction` is niet `LONG` of `SHORT`
 
 Optioneel (warn-level):
 
 - `ingested_at_utc` ligt voor `timestamp_utc`
 - execution event zonder `order_ref`
+- `trade_executed` zonder `order_ref` op de envelope
 - governance event zonder `account_id`
 
 Replay-sorteerregel:
@@ -337,7 +390,7 @@ Replay-sorteerregel:
 
 `EVENT_SCHEMA.md` is correct geimplementeerd wanneer:
 
-- alle 11 v1 eventtypes valideerbaar zijn
+- alle v1 contract-eventtypes valideerbaar zijn
 - validator CLI invalid events markeert met duidelijke reden
 - replay CLI op basis van correlatievelden werkt
 - daily summary aantallen per eventtype kan rapporteren
