@@ -14,6 +14,8 @@ import streamlit as st
 from config import table_max_events
 from page_fragments import ensure_day_option, sidebar_events_root_input
 from services.exporter import (
+    jsonl_shard_timestamp_bounds,
+    normalized_export_time_bounds,
     normalized_rows_csv,
     read_jsonl_text,
     zip_day_directory,
@@ -124,7 +126,19 @@ for name, p in zip(shard_names, shard_paths):
 if opts:
     labels = [f"{n} — {p}" for n, p in opts]
     choice = st.selectbox("Shard", options=range(len(opts)), format_func=lambda i: labels[i])
-    txt = read_jsonl_text([opts[choice][1]])
+    shard_path = opts[choice][1]
+    t_shard_lo, t_shard_hi = jsonl_shard_timestamp_bounds(shard_path)
+    if t_shard_lo and t_shard_hi:
+        st.caption(
+            f"**Session folder (UTC date):** `{sel}` · "
+            f"**Events in this shard (UTC):** `{t_shard_lo}` → `{t_shard_hi}`"
+        )
+    else:
+        st.caption(
+            f"**Session folder (UTC date):** `{sel}` · "
+            "**Events in this shard:** no parsable `timestamp_utc` lines found."
+        )
+    txt = read_jsonl_text([shard_path])
     st.download_button(
         label="Download this JSONL",
         data=txt,
@@ -138,10 +152,20 @@ st.subheader("Normalized summary CSV")
 table_cap = table_max_events()
 rows = cached_load_bounded(r_s, sel, "__all__", cap=table_cap)
 csv_text = normalized_rows_csv(rows)
-st.caption(
+exp_lo, exp_hi = normalized_export_time_bounds(rows)
+csv_cap = (
     f"CSV uses session **day** `{sel}`, scope **__all__**, first **{table_cap}** events "
-    f"(`QUANTLOG_OPS_TABLE_MAX_EVENTS`). Run focus `{run_pick}` does not slice CSV."
+    f"(`QUANTLOG_OPS_TABLE_MAX_EVENTS`). "
 )
+if exp_lo and exp_hi:
+    csv_cap += (
+        f"**Export time window (UTC):** `{exp_lo}` → `{exp_hi}` "
+        f"({len(rows)} normalized rows). "
+    )
+else:
+    csv_cap += "**Export time window:** no rows with `timestamp_utc`. "
+csv_cap += f"Run focus `{run_pick}` does not slice CSV."
+st.caption(csv_cap)
 st.download_button(
     label=f"Download normalized CSV (cap {table_cap} events)",
     data=csv_text,
