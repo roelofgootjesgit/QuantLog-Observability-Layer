@@ -14,7 +14,11 @@ from quantlog.events.schema import (
     ALLOWED_ENVIRONMENTS,
     ALLOWED_SEVERITIES,
     ALLOWED_SOURCE_SYSTEMS,
+    CLOSEST_TO_ENTRY_SIDES,
+    COMBO_MODULE_LABELS,
     EVENT_PAYLOAD_REQUIRED,
+    GATE_SUMMARY_GATE_KEYS,
+    GATE_SUMMARY_STATUSES,
     NO_ACTION_REASONS_ALLOWED,
     REQUIRED_ENVELOPE_FIELDS,
     RISK_GUARD_DECISIONS,
@@ -71,6 +75,152 @@ def _validate_uuid(value: Any) -> bool:
         return True
     except ValueError:
         return False
+
+
+def _num_in_closed_unit_interval(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return 0.0 <= float(value) <= 1.0
+    return False
+
+
+def _non_negative_int_not_bool(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _signal_evaluated_optional_issues(payload: dict[str, Any]) -> list[tuple[str, str]]:
+    """Return (level, message) tuples for optional `signal_evaluated` desk-grade fields."""
+    rows: list[tuple[str, str]] = []
+
+    gs = payload.get("gate_summary")
+    if gs is not None:
+        if not isinstance(gs, dict):
+            rows.append(("error", "signal_evaluated_invalid_gate_summary_not_object"))
+        else:
+            for gate_key, gate_val in gs.items():
+                if gate_key not in GATE_SUMMARY_GATE_KEYS:
+                    rows.append(("warn", f"signal_evaluated_unknown_gate_summary_key: {gate_key!r}"))
+                else:
+                    if (
+                        not isinstance(gate_val, str)
+                        or gate_val not in GATE_SUMMARY_STATUSES
+                    ):
+                        rows.append(
+                            (
+                                "error",
+                                f"signal_evaluated_invalid_gate_summary_status[{gate_key}]: {gate_val!r}",
+                            )
+                        )
+
+    def _blocking_gate(field: str) -> None:
+        if field not in payload:
+            return
+        val = payload[field]
+        if val is None:
+            return
+        if not isinstance(val, str) or val not in GATE_SUMMARY_GATE_KEYS:
+            rows.append(("error", f"signal_evaluated_invalid_{field}: {val!r}"))
+
+    _blocking_gate("blocked_by_primary_gate")
+    _blocking_gate("blocked_by_secondary_gate")
+
+    ep = payload.get("evaluation_path")
+    if ep is not None:
+        if not isinstance(ep, list):
+            rows.append(("error", "signal_evaluated_invalid_evaluation_path_not_array"))
+        else:
+            for idx, seg in enumerate(ep):
+                if not isinstance(seg, str):
+                    rows.append(
+                        (
+                            "error",
+                            f"signal_evaluated_invalid_evaluation_path_segment[{idx}]: {seg!r}",
+                        )
+                    )
+                elif seg not in GATE_SUMMARY_GATE_KEYS:
+                    rows.append(
+                        ("warn", f"signal_evaluated_unknown_evaluation_path_gate: {seg!r}")
+                    )
+
+    if "new_bar_detected" in payload and not isinstance(payload["new_bar_detected"], bool):
+        rows.append(("error", f"signal_evaluated_invalid_new_bar_detected: {payload['new_bar_detected']!r}"))
+    if "same_bar_guard_triggered" in payload and not isinstance(
+        payload["same_bar_guard_triggered"], bool
+    ):
+        rows.append(
+            (
+                "error",
+                f"signal_evaluated_invalid_same_bar_guard_triggered: {payload['same_bar_guard_triggered']!r}",
+            )
+        )
+
+    sk = payload.get("same_bar_skip_count_for_bar")
+    if sk is not None and not _non_negative_int_not_bool(sk):
+        rows.append(("error", f"signal_evaluated_invalid_same_bar_skip_count_for_bar: {sk!r}"))
+
+    for ts_key in ("bar_ts", "poll_ts"):
+        if ts_key in payload and payload[ts_key] is not None:
+            if not _is_utc_iso8601(payload[ts_key]):
+                rows.append(("error", f"signal_evaluated_invalid_{ts_key}"))
+
+    ns = payload.get("near_entry_score")
+    if ns is not None and not _num_in_closed_unit_interval(ns):
+        rows.append(("error", f"signal_evaluated_invalid_near_entry_score: {ns!r}"))
+
+    for k in ("combo_active_modules_count_long", "combo_active_modules_count_short", "active_modules_count_long", "active_modules_count_short"):
+        if k in payload and payload[k] is not None:
+            v = payload[k]
+            if not _non_negative_int_not_bool(v):
+                rows.append(("error", f"signal_evaluated_invalid_{k}: {v!r}"))
+
+    for k in ("entry_distance_long", "entry_distance_short"):
+        if k in payload and payload[k] is not None:
+            v = payload[k]
+            if not _non_negative_int_not_bool(v):
+                rows.append(("error", f"signal_evaluated_invalid_{k}: {v!r}"))
+
+    ces = payload.get("closest_to_entry_side")
+    if ces is not None and (not isinstance(ces, str) or ces not in CLOSEST_TO_ENTRY_SIDES):
+        rows.append(("error", f"signal_evaluated_invalid_closest_to_entry_side: {ces!r}"))
+
+    for side_key in ("missing_modules_long", "missing_modules_short"):
+        arr = payload.get(side_key)
+        if arr is None:
+            continue
+        if not isinstance(arr, list):
+            rows.append(("error", f"signal_evaluated_invalid_{side_key}_not_array"))
+            continue
+        for item in arr:
+            if not isinstance(item, str) or item not in COMBO_MODULE_LABELS:
+                rows.append(("error", f"signal_evaluated_invalid_{side_key}_label: {item!r}"))
+
+    for mod_key in ("modules_long", "modules_short"):
+        mobj = payload.get(mod_key)
+        if mobj is None:
+            continue
+        if not isinstance(mobj, dict):
+            rows.append(("error", f"signal_evaluated_invalid_{mod_key}_not_object"))
+            continue
+        for mk, mv in mobj.items():
+            if mk not in COMBO_MODULE_LABELS:
+                rows.append(("warn", f"signal_evaluated_unknown_module_key[{mod_key}]: {mk!r}"))
+            if not isinstance(mv, bool):
+                rows.append(("error", f"signal_evaluated_invalid_{mod_key}[{mk}]: {mv!r}"))
+
+    for bkey in ("setup_candidate", "entry_ready"):
+        if bkey in payload and not isinstance(payload[bkey], bool):
+            rows.append(("error", f"signal_evaluated_invalid_{bkey}: {payload[bkey]!r}"))
+
+    cs = payload.get("candidate_strength")
+    if cs is not None and not _num_in_closed_unit_interval(cs):
+        rows.append(("error", f"signal_evaluated_invalid_candidate_strength: {cs!r}"))
+
+    tsnap = payload.get("threshold_snapshot")
+    if tsnap is not None and not isinstance(tsnap, dict):
+        rows.append(("error", "signal_evaluated_invalid_threshold_snapshot_not_object"))
+
+    return rows
 
 
 def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
@@ -231,6 +381,17 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                     path=raw_line.path,
                     line_number=raw_line.line_number,
                     message=f"missing_payload_field[{event_type}]: {field_name}",
+                )
+                )
+
+    if event_type == "signal_evaluated" and isinstance(payload, dict):
+        for level, msg in _signal_evaluated_optional_issues(payload):
+            issues.append(
+                ValidationIssue(
+                    level=level,
+                    path=raw_line.path,
+                    line_number=raw_line.line_number,
+                    message=msg,
                 )
             )
 

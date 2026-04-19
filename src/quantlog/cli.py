@@ -15,12 +15,16 @@ from quantlog.events.schema import (
     ALLOWED_ENVIRONMENTS,
     ALLOWED_SEVERITIES,
     ALLOWED_SOURCE_SYSTEMS,
+    COMBO_MODULE_LABELS,
     EVENT_PAYLOAD_REQUIRED,
+    GATE_SUMMARY_GATE_KEYS,
+    GATE_SUMMARY_STATUSES,
     NO_ACTION_REASONS_ALLOWED,
     NO_ACTION_REASONS_CORE,
     NO_ACTION_REASONS_EXTENDED,
     REQUIRED_ENVELOPE_FIELDS,
     RISK_GUARD_DECISIONS,
+    SIGNAL_EVALUATED_OPTIONAL_PAYLOAD_KEYS,
     TRADE_ACTION_DECISIONS,
     TRADE_EXECUTED_DIRECTIONS,
 )
@@ -241,6 +245,12 @@ def cmd_export_v1_schema(_args: argparse.Namespace) -> int:
                 "core": sorted(NO_ACTION_REASONS_CORE),
                 "extended": sorted(NO_ACTION_REASONS_EXTENDED),
                 "all_allowed": sorted(NO_ACTION_REASONS_ALLOWED),
+            },
+            "signal_evaluated_optional": {
+                "payload_keys": list(SIGNAL_EVALUATED_OPTIONAL_PAYLOAD_KEYS),
+                "gate_summary_gate_keys": sorted(GATE_SUMMARY_GATE_KEYS),
+                "gate_summary_statuses": sorted(GATE_SUMMARY_STATUSES),
+                "combo_module_labels": sorted(COMBO_MODULE_LABELS),
             },
         }
     )

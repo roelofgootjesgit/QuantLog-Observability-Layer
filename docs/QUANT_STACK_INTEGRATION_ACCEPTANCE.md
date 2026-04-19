@@ -15,9 +15,9 @@ Historisch onderscheid:
 
 | Repo | Branch | Commit (volledig) | Onderwerp |
 |------|--------|-------------------|-----------|
-| quantbuildE1 | `v2-development` | `3cf42b81549223a9fa2804f6c1a4e6c414cbab63` | Integrate QuantLog emitter into live runner and add post-run pipeline |
-| quantbridgev1 | `main` | `ccdea09a4e83ef1c401b14aae18d20c2ecec7cc9` | Make observability sink QuantLog-compatible with canonical envelope |
-| quantlogv1 | `main` | `c4f12fd10853ac64aa5cbb83067c87b1201df0cd` | Acceptance 001 resultaten ingevuld + QuantLog CLI |
+| QuantBuild — Signal Engine (`quantbuildE1`) | `v2-development` | `3cf42b81549223a9fa2804f6c1a4e6c414cbab63` | Integrate QuantLog emitter into live runner and add post-run pipeline |
+| QuantBridge — Execution Engine (`quantbridgev1`) | `main` | `ccdea09a4e83ef1c401b14aae18d20c2ecec7cc9` | Make observability sink QuantLog-compatible with canonical envelope |
+| QuantLog — Observability Layer (`quantlogv1`) | `main` | `c4f12fd10853ac64aa5cbb83067c87b1201df0cd` | Acceptance 001 resultaten ingevuld + QuantLog CLI |
 
 *(Latere commits op `main` kunnen dit dossier alleen documentair bijwerken; integratietests refereren aan de SHAs hierboven.)*
 

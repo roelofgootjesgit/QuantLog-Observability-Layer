@@ -48,6 +48,12 @@ def _summary_for_event(event: dict[str, Any]) -> str:
         return f"order_ref={payload.get('order_ref', event.get('order_ref', 'n/a'))}"
     if event_type == "governance_state_changed":
         return f"{payload.get('old_state', '?')} -> {payload.get('new_state', '?')}"
+    if event_type == "market_data_stale_warning":
+        return (
+            f"lag={payload.get('bar_lag_minutes', '?')}m "
+            f"latest={payload.get('latest_bar_ts_utc', '?')} "
+            f"thr={payload.get('threshold_minutes', '?')}m"
+        )
     return event_type
 
 

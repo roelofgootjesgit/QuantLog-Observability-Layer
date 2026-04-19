@@ -1,4 +1,4 @@
-# QuantLog v1
+# QuantLog — Observability Layer
 
 QuantLog is the observability and truth layer for the Quant stack:
 

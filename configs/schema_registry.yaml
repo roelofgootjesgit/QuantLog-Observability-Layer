@@ -7,6 +7,37 @@ event_types:
       - signal_type
       - signal_direction
       - confidence
+    # Desk-grade upgrade (optional; validated when present). See docs/QUANTBUILD_LOGGING_UPGRADE_DATA_COLLECTION.md
+    optional_payload:
+      - new_bar_detected
+      - bar_ts
+      - poll_ts
+      - same_bar_guard_triggered
+      - same_bar_guard_reason
+      - same_bar_skip_count_for_bar
+      - previous_eval_stage_on_bar
+      - gate_summary
+      - blocked_by_primary_gate
+      - blocked_by_secondary_gate
+      - evaluation_path
+      - near_entry_score
+      - closest_to_entry_side
+      - active_modules_count_long
+      - active_modules_count_short
+      - missing_modules_long
+      - missing_modules_short
+      - entry_distance_long
+      - entry_distance_short
+      - modules_long
+      - modules_short
+      - combo_active_modules_count_long
+      - combo_active_modules_count_short
+      - setup_candidate
+      - candidate_side
+      - candidate_strength
+      - candidate_reason
+      - entry_ready
+      - threshold_snapshot
   risk_guard_decision:
     required_payload:
       - guard_name
@@ -100,3 +131,10 @@ event_types:
       - gap_end_utc
       - gap_seconds
       - reason
+  market_data_stale_warning:
+    required_payload:
+      - symbol
+      - bar_lag_minutes
+      - latest_bar_ts_utc
+      - session
+      - threshold_minutes

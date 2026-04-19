@@ -91,6 +91,100 @@ class TestValidator(unittest.TestCase):
             self.assertEqual(report.events_valid, 1)
             self.assertEqual(len([issue for issue in report.issues if issue.level == "error"]), 0)
 
+    def test_signal_evaluated_desk_grade_optional_payload_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000022",
+                "event_type": "signal_evaluated",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "signal_engine",
+                "environment": "paper",
+                "run_id": "run_upgrade",
+                "session_id": "session_upgrade",
+                "source_seq": 1,
+                "trace_id": "trace_upgrade",
+                "severity": "info",
+                "payload": {
+                    "signal_type": "ict_sweep",
+                    "signal_direction": "NONE",
+                    "confidence": 0.0,
+                    "new_bar_detected": False,
+                    "bar_ts": "2026-04-17T14:30:00Z",
+                    "poll_ts": "2026-04-17T14:31:25Z",
+                    "same_bar_guard_triggered": True,
+                    "same_bar_guard_reason": "last_processed_bar_ts_matches_latest_bar_ts",
+                    "same_bar_skip_count_for_bar": 3,
+                    "gate_summary": {
+                        "session_gate": "pass",
+                        "regime_gate": "pass",
+                        "structure_gate": "fail",
+                        "liquidity_gate": "fail",
+                        "trigger_gate": "fail",
+                        "same_bar_guard": "pass",
+                        "risk_gate": "not_reached",
+                    },
+                    "blocked_by_primary_gate": "structure_gate",
+                    "blocked_by_secondary_gate": "trigger_gate",
+                    "evaluation_path": ["session_gate", "regime_gate", "structure_gate"],
+                    "near_entry_score": 0.35,
+                    "closest_to_entry_side": "long",
+                    "combo_active_modules_count_long": 1,
+                    "combo_active_modules_count_short": 0,
+                    "missing_modules_long": ["trigger", "liquidity"],
+                    "missing_modules_short": ["structure", "liquidity", "trigger"],
+                    "entry_distance_long": 2,
+                    "entry_distance_short": 3,
+                    "modules_long": {"structure": True, "liquidity": False, "trigger": False},
+                    "modules_short": {"structure": False, "liquidity": False, "trigger": False},
+                    "setup_candidate": False,
+                    "candidate_strength": 0.22,
+                    "entry_ready": False,
+                    "threshold_snapshot": {"min_combo_required": 3},
+                },
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            self.assertEqual(report.events_valid, 1)
+            self.assertEqual(len([i for i in report.issues if i.level == "error"]), 0)
+
+    def test_signal_evaluated_invalid_gate_summary_status_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000023",
+                "event_type": "signal_evaluated",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "signal_engine",
+                "environment": "paper",
+                "run_id": "run_bad_gs",
+                "session_id": "session_bad_gs",
+                "source_seq": 1,
+                "trace_id": "trace_bad_gs",
+                "severity": "info",
+                "payload": {
+                    "signal_type": "ict_sweep",
+                    "signal_direction": "LONG",
+                    "confidence": 0.5,
+                    "gate_summary": {"session_gate": "blocked"},
+                },
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            self.assertEqual(report.events_valid, 0)
+            error_messages = [issue.message for issue in report.issues if issue.level == "error"]
+            self.assertTrue(
+                any(m.startswith("signal_evaluated_invalid_gate_summary_status") for m in error_messages)
+            )
+
     def test_trade_action_decision_enum_is_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             path = Path(tmp_dir)
@@ -295,6 +389,38 @@ class TestValidator(unittest.TestCase):
             report = validate_path(path)
             error_messages = [issue.message for issue in report.issues if issue.level == "error"]
             self.assertIn("invalid_trade_executed_direction: BUY", error_messages)
+
+    def test_market_data_stale_warning_valid_minimal_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            event = {
+                "event_id": "00000000-0000-0000-0000-000000000021",
+                "event_type": "market_data_stale_warning",
+                "event_version": 1,
+                "timestamp_utc": "2026-04-14T14:58:00Z",
+                "ingested_at_utc": "2026-04-14T14:58:01Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "live",
+                "run_id": "run_stale",
+                "session_id": "session_stale",
+                "source_seq": 1,
+                "trace_id": "trace_stale",
+                "severity": "warn",
+                "payload": {
+                    "symbol": "XAUUSD",
+                    "bar_lag_minutes": 22.5,
+                    "latest_bar_ts_utc": "2026-04-14 14:30:00+00:00",
+                    "session": "New York",
+                    "threshold_minutes": 16.0,
+                    "source_actual": "cache_fresh",
+                },
+            }
+            event_file.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            self.assertEqual(report.events_valid, 1)
+            self.assertEqual(len([i for i in report.issues if i.level == "error"]), 0)
 
 
 if __name__ == "__main__":

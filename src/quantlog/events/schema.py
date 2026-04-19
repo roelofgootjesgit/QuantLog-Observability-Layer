@@ -57,6 +57,14 @@ EVENT_PAYLOAD_REQUIRED: Final[dict[str, set[str]]] = {
         "gap_seconds",
         "reason",
     },
+    # QuantBuild live: 15m bar index lags wall clock during entry session (data freshness).
+    "market_data_stale_warning": {
+        "symbol",
+        "bar_lag_minutes",
+        "latest_bar_ts_utc",
+        "session",
+        "threshold_minutes",
+    },
 }
 
 TRADE_ACTION_DECISIONS: Final[set[str]] = {"ENTER", "EXIT", "REVERSE", "NO_ACTION"}
@@ -82,4 +90,60 @@ NO_ACTION_REASONS_EXTENDED: Final[set[str]] = {
     "confidence_too_low",
 }
 NO_ACTION_REASONS_ALLOWED: Final[set[str]] = NO_ACTION_REASONS_CORE | NO_ACTION_REASONS_EXTENDED
+
+# --- signal_evaluated optional “desk-grade” upgrade (validated when emitters populate) ---
+
+GATE_SUMMARY_GATE_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "session_gate",
+        "regime_gate",
+        "structure_gate",
+        "liquidity_gate",
+        "trigger_gate",
+        "same_bar_guard",
+        "risk_gate",
+    }
+)
+
+GATE_SUMMARY_STATUSES: Final[frozenset[str]] = frozenset({"pass", "fail", "not_reached"})
+
+COMBO_MODULE_LABELS: Final[frozenset[str]] = frozenset({"structure", "liquidity", "trigger"})
+
+CLOSEST_TO_ENTRY_SIDES: Final[frozenset[str]] = frozenset({"long", "short", "none"})
+
+SIGNAL_EVALUATED_OPTIONAL_PAYLOAD_KEYS: Final[tuple[str, ...]] = tuple(
+    sorted(
+        {
+            "active_modules_count_long",
+            "active_modules_count_short",
+            "bar_ts",
+            "blocked_by_primary_gate",
+            "blocked_by_secondary_gate",
+            "candidate_reason",
+            "candidate_side",
+            "candidate_strength",
+            "closest_to_entry_side",
+            "combo_active_modules_count_long",
+            "combo_active_modules_count_short",
+            "entry_distance_long",
+            "entry_distance_short",
+            "entry_ready",
+            "evaluation_path",
+            "gate_summary",
+            "missing_modules_long",
+            "missing_modules_short",
+            "modules_long",
+            "modules_short",
+            "near_entry_score",
+            "new_bar_detected",
+            "poll_ts",
+            "previous_eval_stage_on_bar",
+            "same_bar_guard_reason",
+            "same_bar_guard_triggered",
+            "same_bar_skip_count_for_bar",
+            "setup_candidate",
+            "threshold_snapshot",
+        }
+    )
+)
 

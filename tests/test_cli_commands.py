@@ -40,6 +40,7 @@ class TestCliCommands(unittest.TestCase):
         self.assertIn("signal_detected", data["event_types"])
         self.assertIn("signal_filtered", data["event_types"])
         self.assertIn("trade_executed", data["event_types"])
+        self.assertIn("market_data_stale_warning", data["event_types"])
         self.assertIn("signal_id", data["payload_contracts"]["signal_detected"])
 
     def test_list_envelope_schema_has_core_enums(self) -> None:
@@ -65,6 +66,11 @@ class TestCliCommands(unittest.TestCase):
         self.assertIn("no_setup", data["no_action_reasons"]["core"])
         self.assertIn("run_id", data["envelope"]["required_fields"])
         self.assertIn("LONG", data["envelope"]["trade_executed_directions"])
+        opt = data["signal_evaluated_optional"]
+        self.assertIn("payload_keys", opt)
+        self.assertIn("gate_summary", opt["payload_keys"])
+        self.assertIn("pass", opt["gate_summary_statuses"])
+        self.assertIn("structure", opt["combo_module_labels"])
 
 
 if __name__ == "__main__":
