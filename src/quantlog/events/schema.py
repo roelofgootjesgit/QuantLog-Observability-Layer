@@ -43,6 +43,7 @@ EVENT_PAYLOAD_REQUIRED: Final[dict[str, set[str]]] = {
     "trade_action": {"decision", "reason"},
     # Confirmed registration after ENTER (QuantBuild; envelope should carry order_ref when known).
     "trade_executed": {"direction", "trade_id"},
+    "trade_closed": {"trade_id", "exit_price", "pnl_r"},
     "adaptive_mode_transition": {"old_mode", "new_mode", "reason"},
     "broker_connect": {"broker", "status"},
     "order_submitted": {"order_ref", "side", "volume"},

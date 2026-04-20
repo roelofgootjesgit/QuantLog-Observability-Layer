@@ -101,20 +101,21 @@ Zonder deze velden is betrouwbare replay niet mogelijk.
 4. `risk_guard_decision`
 5. `trade_action`
 6. `trade_executed` — trade geregistreerd na ENTER (aanvulling op `trade_action` ENTER)
-7. `adaptive_mode_transition`
+7. `trade_closed` — positie gesloten met exit en PnL (QuantBuild-backtest simulate; broker-pad kan later hetzelfde event gebruiken)
+8. `adaptive_mode_transition`
 
 ### QuantBridge
 
-8. `broker_connect`
-9. `order_submitted`
-10. `order_filled`
-11. `order_rejected`
-12. `governance_state_changed`
-13. `failsafe_pause`
+9. `broker_connect`
+10. `order_submitted`
+11. `order_filled`
+12. `order_rejected`
+13. `governance_state_changed`
+14. `failsafe_pause`
 
 ### QuantLog
 
-14. `audit_gap_detected`
+15. `audit_gap_detected`
 
 ---
 
@@ -175,7 +176,27 @@ Verplicht: `direction` (`LONG`|`SHORT`), `trade_id`. Optioneel: `signal_id`, `se
 }
 ```
 
-### 6.5 `risk_guard_decision`
+### 6.5 `trade_closed`
+
+Verplicht: `trade_id`, `exit_price`, `pnl_r`. Aanbevolen: `pnl_abs`, `order_ref`, `mae_r`, `mfe_r`, `outcome` (`WIN`|`LOSS`|`TIMEOUT`), `session`, `regime`. Timestamp van het event is de **sluittijd** (UTC).
+
+```json
+{
+  "trade_id": "BT-a1b2c3d4",
+  "order_ref": "BT-a1b2c3d4",
+  "direction": "LONG",
+  "exit_price": 2654.2,
+  "pnl_abs": 12.5,
+  "pnl_r": 1.85,
+  "mae_r": 0.4,
+  "mfe_r": 2.1,
+  "outcome": "WIN",
+  "session": "London",
+  "regime": "compression"
+}
+```
+
+### 6.6 `risk_guard_decision`
 
 ```json
 {
@@ -189,7 +210,7 @@ Verplicht: `direction` (`LONG`|`SHORT`), `trade_id`. Optioneel: `signal_id`, `se
 
 `decision` waarden: `ALLOW`, `BLOCK`, `REDUCE`, `DELAY`.
 
-### 6.6 `trade_action`
+### 6.7 `trade_action`
 
 ```json
 {
@@ -213,7 +234,7 @@ Semantiek:
 - `risk_guard_decision` bepaalt `ALLOW|BLOCK|REDUCE|DELAY`.
 - `trade_action` geeft alleen trading intent weer (`ENTER|EXIT|REVERSE|NO_ACTION`).
 
-### 6.7 `adaptive_mode_transition`
+### 6.8 `adaptive_mode_transition`
 
 ```json
 {
@@ -225,7 +246,7 @@ Semantiek:
 }
 ```
 
-### 6.8 `broker_connect`
+### 6.9 `broker_connect`
 
 ```json
 {
@@ -236,7 +257,7 @@ Semantiek:
 }
 ```
 
-### 6.9 `order_submitted`
+### 6.10 `order_submitted`
 
 ```json
 {
@@ -249,7 +270,7 @@ Semantiek:
 }
 ```
 
-### 6.10 `order_filled`
+### 6.11 `order_filled`
 
 ```json
 {
@@ -262,7 +283,7 @@ Semantiek:
 }
 ```
 
-### 6.11 `order_rejected`
+### 6.12 `order_rejected`
 
 ```json
 {
@@ -272,7 +293,7 @@ Semantiek:
 }
 ```
 
-### 6.12 `governance_state_changed`
+### 6.13 `governance_state_changed`
 
 ```json
 {
@@ -283,7 +304,7 @@ Semantiek:
 }
 ```
 
-### 6.13 `failsafe_pause`
+### 6.14 `failsafe_pause`
 
 ```json
 {
@@ -293,7 +314,7 @@ Semantiek:
 }
 ```
 
-### 6.14 `audit_gap_detected`
+### 6.15 `audit_gap_detected`
 
 ```json
 {

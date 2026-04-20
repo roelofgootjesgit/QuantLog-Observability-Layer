@@ -1,12 +1,13 @@
-# QuantLog — Observability Layer
+# quantlogv1
 
-QuantLog is the observability and truth layer for the Quant stack:
+Observability and truth layer for the Quant stack (`quantbuildv1` → `quantbridgev1` → **`quantlogv1`** JSONL):
 
-- `QuantBuild` generates strategy/risk decisions.
-- `QuantBridge` handles broker and execution lifecycle.
-- `QuantLog` stores canonical events, replays traces, validates contracts, and reports run quality signals.
+- **`quantbuildv1`** generates strategy/risk decisions.
+- **`quantbridgev1`** handles broker and execution lifecycle.
+- **`quantlogv1`** (this repo) stores canonical events, replays traces, validates contracts, and reports run quality signals.
+- **`quantanalyticsv1`** reads the same JSONL for downstream reports (funnel, no-trade reasons, performance slices).
 
-## What QuantLog does
+## What this repo does
 
 - Canonical event envelope across systems.
 - Append-only JSONL event store.
@@ -31,7 +32,7 @@ See [docs/EVENT_SCHEMA.md](docs/EVENT_SCHEMA.md) for full schema and examples. *
 ## Repository layout
 
 ```text
-quantlog-v1/
+quantlogv1/
 ├── src/quantlog/
 │   ├── events/       schema + io
 │   ├── ingest/       emitters + health checks
@@ -111,7 +112,7 @@ On Linux/VPS:
 bash scripts/nightly_quantlog_report.sh data/events/sample
 ```
 
-Canonical `NO_ACTION` payload reasons (for QuantBuild emitters):
+Canonical `NO_ACTION` payload reasons (for **quantbuildv1** emitters):
 
 ```powershell
 python -m quantlog.cli list-no-action-reasons
@@ -139,7 +140,7 @@ python -m quantlog.cli export-v1-schema
 
 `non_contract_event_types` counts `event_type` strings that are **not** in the v1 contract (`list-event-types`). The quality score applies a small penalty when any are present.
 
-QuantBuild pipeline (edge decomposition): contract types `signal_detected`, `signal_filtered`, `trade_executed` — see `docs/EVENT_SCHEMA.md`. `summarize-day` adds `signal_filtered_by_reason` (histogram op canonieke `filter_reason`).
+**quantbuildv1** pipeline (edge decomposition): contract types `signal_detected`, `signal_filtered`, `trade_executed` — see `docs/EVENT_SCHEMA.md`. `summarize-day` adds `signal_filtered_by_reason` (histogram op canonieke `filter_reason`).
 
 `summarize-day` and `score-run` include `count_unique_run_ids`, `count_unique_session_ids`, and `count_unique_trace_ids` (distinct non-empty envelope values) to spot merged folders or multi-run days.
 
@@ -196,6 +197,16 @@ Local CI gates:
 - Runs on push and pull request
 - Executes the same smoke gates as local CI script
 
+## Suite repositories (GitHub)
+
+| Repo | Remote |
+| --- | --- |
+| `quantmetrics_os` | [roelofgootjesgit/quantmetrics_os](https://github.com/roelofgootjesgit/quantmetrics_os) |
+| `quantbuildv1` | [roelofgootjesgit/quantbuildv1](https://github.com/roelofgootjesgit/quantbuildv1) |
+| `quantbridgev1` | [roelofgootjesgit/quantbridgev1](https://github.com/roelofgootjesgit/quantbridgev1) |
+| `quantlogv1` (**this**) | [roelofgootjesgit/quantlogv1](https://github.com/roelofgootjesgit/quantlogv1) |
+| `quantanalyticsv1` | [roelofgootjesgit/quantanalyticsv1](https://github.com/roelofgootjesgit/quantanalyticsv1) |
+
 ## Documentation
 
 All Markdown files live under **`docs/`**. Start at **[docs/README.md](docs/README.md)** for the full index.
@@ -212,5 +223,5 @@ Highlights:
 - [docs/ROADMAP_EXECUTION_STATUS.md](docs/ROADMAP_EXECUTION_STATUS.md) — roadmap status and completion log
 - [docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md](docs/QUANTBUILD_QUANTLOG_INTEGRATION_PLAN.md) — integration plan (dry-run → full stack)
 - [docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md](docs/QUANT_STACK_INTEGRATION_ACCEPTANCE.md) — stack acceptance dossier (001 / 002)
-- [docs/VPS_SYNC.md](docs/VPS_SYNC.md) — VPS: zelfde venv/pull-workflow als QuantBuild (`VPS_MULTI_MODULE` + Operator Cheatsheet), QuantLog als derde repo
+- [docs/VPS_SYNC.md](docs/VPS_SYNC.md) — VPS: zelfde venv/pull-workflow als **quantbuildv1** (`VPS_MULTI_MODULE` + Operator Cheatsheet), **quantlogv1** als derde repo
 - [docs/QUANTLOG_UITLEG.md](docs/QUANTLOG_UITLEG.md) / [docs/QUANTLOG_SOFTWARE.md](docs/QUANTLOG_SOFTWARE.md) — NL / software overview

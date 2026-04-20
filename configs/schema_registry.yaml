@@ -93,6 +93,20 @@ event_types:
     allowed_directions:
       - LONG
       - SHORT
+  trade_closed:
+    required_payload:
+      - trade_id
+      - exit_price
+      - pnl_r
+    optional_payload:
+      - order_ref
+      - direction
+      - pnl_abs
+      - mae_r
+      - mfe_r
+      - outcome
+      - session
+      - regime
   adaptive_mode_transition:
     required_payload:
       - old_mode
