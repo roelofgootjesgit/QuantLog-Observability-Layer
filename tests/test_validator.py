@@ -631,6 +631,109 @@ class TestValidator(unittest.TestCase):
             msgs = [i.message for i in report.issues if i.level == "error"]
             self.assertTrue(any(m.startswith("decision_chain_order_violation") for m in msgs))
 
+    def test_trade_id_correlation_must_match_run_session_trace(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            f = path / "events.jsonl"
+            blk = {
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbridge",
+                "source_component": "exec",
+                "environment": "paper",
+                "session_id": "session_same",
+                "severity": "info",
+                "trade_id": "trade_dup_ref",
+                "trace_id": "trace_one",
+            }
+            a = {
+                **blk,
+                "event_id": "00000000-0000-0000-0000-000000000101",
+                "event_type": "order_submitted",
+                "run_id": "run_one",
+                "source_seq": 1,
+                "payload": {"order_ref": "o1", "side": "BUY", "volume": 1.0},
+            }
+            b = {
+                **blk,
+                "event_id": "00000000-0000-0000-0000-000000000102",
+                "event_type": "order_filled",
+                "run_id": "run_two",
+                "source_seq": 1,
+                "payload": {"order_ref": "o1", "fill_price": 1.0},
+            }
+            f.write_text(json.dumps(a) + "\n" + json.dumps(b) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            msgs = [i.message for i in report.issues if i.level == "error"]
+            self.assertTrue(any(m.startswith("trade_id_correlation_mismatch") for m in msgs))
+
+    def test_order_ref_trade_id_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            f = path / "e.jsonl"
+            base = {
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbridge",
+                "source_component": "exec",
+                "environment": "paper",
+                "run_id": "run_r",
+                "session_id": "session_r",
+                "trace_id": "trace_r",
+                "severity": "info",
+            }
+            a = {
+                **base,
+                "event_id": "00000000-0000-0000-0000-000000000201",
+                "event_type": "order_submitted",
+                "order_ref": "ord_m",
+                "trade_id": "t1",
+                "source_seq": 1,
+                "payload": {"order_ref": "ord_m", "side": "BUY", "volume": 1.0},
+            }
+            b = {
+                **base,
+                "event_id": "00000000-0000-0000-0000-000000000202",
+                "event_type": "order_filled",
+                "order_ref": "ord_m",
+                "trade_id": "t2",
+                "source_seq": 2,
+                "payload": {"order_ref": "ord_m", "fill_price": 1.0},
+            }
+            f.write_text(json.dumps(a) + "\n" + json.dumps(b) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            msgs = [i.message for i in report.issues if i.level == "error"]
+            self.assertTrue(any(m.startswith("order_ref_trade_id_mismatch") for m in msgs))
+
+    def test_trade_id_envelope_payload_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir)
+            event_file = path / "events.jsonl"
+            ev = {
+                "event_id": "00000000-0000-0000-0000-000000000103",
+                "event_type": "trade_executed",
+                "event_version": 1,
+                "timestamp_utc": "2026-03-29T18:00:00Z",
+                "ingested_at_utc": "2026-03-29T18:00:01Z",
+                "source_system": "quantbuild",
+                "source_component": "live_runner",
+                "environment": "paper",
+                "run_id": "run_ep",
+                "session_id": "session_ep",
+                "source_seq": 1,
+                "trace_id": "trace_ep",
+                "trade_id": "trade_a",
+                "severity": "info",
+                "order_ref": "ord_ep",
+                "payload": {"direction": "LONG", "trade_id": "trade_b"},
+            }
+            event_file.write_text(json.dumps(ev) + "\n", encoding="utf-8")
+            report = validate_path(path)
+            msgs = [i.message for i in report.issues if i.level == "error"]
+            self.assertIn("trade_id_envelope_payload_mismatch", msgs)
+
     def test_market_data_stale_warning_valid_minimal_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             path = Path(tmp_dir)

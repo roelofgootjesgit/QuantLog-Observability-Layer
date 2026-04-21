@@ -400,6 +400,26 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                 )
                 )
 
+    if isinstance(payload, dict):
+        for key in ("trade_id", "order_ref"):
+            ev_v = event.get(key)
+            pl_v = payload.get(key)
+            if (
+                isinstance(ev_v, str)
+                and ev_v.strip()
+                and isinstance(pl_v, str)
+                and pl_v.strip()
+                and ev_v.strip() != pl_v.strip()
+            ):
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=raw_line.path,
+                        line_number=raw_line.line_number,
+                        message=f"{key}_envelope_payload_mismatch",
+                    )
+                )
+
     if event_type == "signal_evaluated" and isinstance(payload, dict):
         for level, msg in _signal_evaluated_optional_issues(payload):
             issues.append(
@@ -512,6 +532,139 @@ def validate_raw_event(raw_line: RawEventLine) -> list[ValidationIssue]:
                 message="governance_event_missing_account_id",
             )
         )
+
+    return issues
+
+
+def _canonical_trade_id(event: dict[str, Any]) -> str | None:
+    """Prefer envelope ``trade_id``, then payload (for correlating mixed producers)."""
+    te = event.get("trade_id")
+    if isinstance(te, str) and te.strip():
+        return te.strip()
+    pl = event.get("payload")
+    if isinstance(pl, dict):
+        pt = pl.get("trade_id")
+        if isinstance(pt, str) and pt.strip():
+            return pt.strip()
+    return None
+
+
+def _canonical_order_ref(event: dict[str, Any]) -> str | None:
+    eo = event.get("order_ref")
+    if isinstance(eo, str) and eo.strip():
+        return eo.strip()
+    pl = event.get("payload")
+    if isinstance(pl, dict):
+        po = pl.get("order_ref")
+        if isinstance(po, str) and po.strip():
+            return po.strip()
+    return None
+
+
+def _canonical_symbol(event: dict[str, Any]) -> str | None:
+    sym = event.get("symbol")
+    if isinstance(sym, str) and sym.strip():
+        return sym.strip()
+    return None
+
+
+def _referential_correlation_issues(rows: list[tuple[Path, int, dict[str, Any]]]) -> list[ValidationIssue]:
+    """Stable ``trade_id`` / ``order_ref`` correlation across schema-valid rows (see canonical doc §2.2)."""
+    issues: list[ValidationIssue] = []
+    trade_seen: dict[str, tuple[str, str, str, str | None]] = {}
+    order_seen: dict[str, tuple[str, str, str | None]] = {}
+
+    for path, line_no, ev in rows:
+        rid = ev.get("run_id")
+        sid = ev.get("session_id")
+        tr = ev.get("trace_id")
+        if not (
+            isinstance(rid, str)
+            and rid.strip()
+            and isinstance(sid, str)
+            and sid.strip()
+            and isinstance(tr, str)
+            and tr.strip()
+        ):
+            continue
+        rs, ss, ts = rid.strip(), sid.strip(), tr.strip()
+
+        sym = _canonical_symbol(ev)
+        ctid = _canonical_trade_id(ev)
+
+        if ctid:
+            prev = trade_seen.get(ctid)
+            if prev is None:
+                trade_seen[ctid] = (rs, ss, ts, sym)
+            else:
+                pr, ps, pt, psym = prev
+                if (rs, ss, ts) != (pr, ps, pt):
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=path,
+                            line_number=line_no,
+                            message=(
+                                "trade_id_correlation_mismatch: "
+                                f"trade_id={ctid!r} "
+                                f"expected_run_session_trace=({pr!r},{ps!r},{pt!r}) "
+                                f"got=({rs!r},{ss!r},{ts!r})"
+                            ),
+                        )
+                    )
+                elif psym is not None and sym is not None and psym != sym:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=path,
+                            line_number=line_no,
+                            message=(
+                                "trade_id_symbol_mismatch: "
+                                f"trade_id={ctid!r} "
+                                f"expected_symbol={psym!r} got_symbol={sym!r}"
+                            ),
+                        )
+                    )
+                else:
+                    merged = psym or sym
+                    trade_seen[ctid] = (pr, ps, pt, merged)
+
+        cor = _canonical_order_ref(ev)
+        if cor:
+            prev_o = order_seen.get(cor)
+            if prev_o is None:
+                order_seen[cor] = (rs, ss, ctid)
+            else:
+                pr, ps, ptid = prev_o
+                if (rs, ss) != (pr, ps):
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=path,
+                            line_number=line_no,
+                            message=(
+                                "order_ref_run_session_mismatch: "
+                                f"order_ref={cor!r} "
+                                f"expected_run_session=({pr!r},{ps!r}) "
+                                f"got=({rs!r},{ss!r})"
+                            ),
+                        )
+                    )
+                elif ptid is not None and ctid is not None and ptid != ctid:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=path,
+                            line_number=line_no,
+                            message=(
+                                "order_ref_trade_id_mismatch: "
+                                f"order_ref={cor!r} "
+                                f"expected_trade_id={ptid!r} got_trade_id={ctid!r}"
+                            ),
+                        )
+                    )
+                elif ptid is None and ctid is not None:
+                    order_seen[cor] = (pr, ps, ctid)
 
     return issues
 
@@ -647,6 +800,7 @@ def validate_path(path: Path) -> ValidationReport:
     lines_scanned = 0
     schema_ok_lines: set[tuple[Path, int]] = set()
     chain_anchors: list[_DecisionChainAnchor] = []
+    ref_rows: list[tuple[Path, int, dict[str, Any]]] = []
 
     for jsonl_path in jsonl_files:
         seq_last: dict[str, int] = {}
@@ -662,6 +816,7 @@ def validate_path(path: Path) -> ValidationReport:
 
             ev = raw_line.parsed
             if isinstance(ev, dict) and line_ok:
+                ref_rows.append((raw_line.path, raw_line.line_number, ev))
                 dc = ev.get("decision_cycle_id")
                 et = ev.get("event_type")
                 ts = ev.get("timestamp_utc")
@@ -687,6 +842,12 @@ def validate_path(path: Path) -> ValidationReport:
     for si in seq_issues:
         if si.level == "error":
             schema_ok_lines.discard((si.path, si.line_number))
+
+    ref_issues = _referential_correlation_issues(ref_rows)
+    issues.extend(ref_issues)
+    for ri in ref_issues:
+        if ri.level == "error":
+            schema_ok_lines.discard((ri.path, ri.line_number))
 
     return ValidationReport(
         files_scanned=len(jsonl_files),
